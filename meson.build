@@ -101,26 +101,3 @@ libfadec = static_library('fadec', sources, tables, install: true)
 fadec = declare_dependency(link_with: libfadec,
                            include_directories: include_directories('.'),
                            sources: tables)
-install_headers(headers)
-
-foreach component : components
-  test(component, executable('@0@-test'.format(component),
-                             '@0@-test.c'.format(component),
-                             dependencies: fadec))
-  if component == 'encode2' and has_cpp
-    test(component + '-cpp', executable('@0@-test-cpp'.format(component),
-                                        '@0@-test.cc'.format(component),
-                                        dependencies: fadec))
-  endif
-endforeach
-
-if meson.version().version_compare('>=0.54.0')
-  meson.override_dependency('fadec', fadec)
-endif
-
-pkg = import('pkgconfig')
-pkg.generate(libraries: libfadec,
-             version: '0.1',
-             name: 'fadec',
-             filebase: 'fadec',
-             description: 'Fast Decoder for x86-32 and x86-64')

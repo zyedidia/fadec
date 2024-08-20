@@ -85,6 +85,8 @@ if not meson.is_subproject()
   generate_args += ['--stats']
 endif
 
+install = not meson.is_subproject()
+
 tables = []
 foreach component : components
   tables += custom_target('@0@_table'.format(component),
@@ -93,11 +95,11 @@ foreach component : components
                           input: files('parseinstrs.py', 'instrs.txt'),
                           output: ['fadec-@0@-public.inc'.format(component),
                                    'fadec-@0@-private.inc'.format(component)],
-                          install: true,
+                          install: install,
                           install_dir: [get_option('includedir'), false])
 endforeach
 
-libfadec = static_library('fadec', sources, tables, install: true)
+libfadec = static_library('fadec', sources, tables, install: install)
 fadec = declare_dependency(link_with: libfadec,
                            include_directories: include_directories('.'),
                            sources: tables)

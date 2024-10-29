@@ -1115,7 +1115,7 @@ def encode2_gen_legacy(variant: EncodeVariant, opsize: int, supports_high_regs: 
             assert "VSIB" not in desc.flags
             assert opcode.modrm[2] is None
             modrm = f"op{flags.modrm_idx^3}"
-            code += f"  unsigned memoff = enc_mem(buf+idx, idx+{imm_size_expr}, {modrm}, {modreg}, 0, 0);\n"
+            code += f"  unsigned memoff = enc_mem(buf+idx, immb+idx, idx+{imm_size_expr}, {modrm}, {modreg}, 0, 0);\n"
             code += f"  if (!memoff) return 0;\n  idx += memoff;\n"
         else:
             if flags.modrm_idx:
@@ -1128,7 +1128,7 @@ def encode2_gen_legacy(variant: EncodeVariant, opsize: int, supports_high_regs: 
     if flags.imm_control >= 2:
         if flags.imm_control == 6:
             imm_expr += " - idx"
-        code += f"  enc_imm(buf+idx, {imm_expr}, {imm_size_expr});\n"
+        code += f"  enc_imm(buf+idx, immb+idx, {imm_expr}, {imm_size_expr});\n"
         code += f"  return idx + {imm_size_expr};\n"
     else:
         code += f"  return idx;\n"
@@ -1187,11 +1187,12 @@ def encode2_gen_vex(variant: EncodeVariant, imm_expr: str, imm_size_expr: str, h
         helperfn = "enc" + ["", "_vex", "_evex"][opcode.vex] + suffix
         helperargs = f"{modrm}, {modreg}, {vexop}"
     bufidx = "buf" if not has_idx else "buf+idx"
-    helpercall = f"{helperfn}({bufidx}, {helperopc}, {helperargs})"
+    immbidx = "immb" if not has_idx else "immb+idx"
+    helpercall = f"{helperfn}({bufidx}, {immbidx}, {helperopc}, {helperargs})"
     if flags.imm_control >= 2:
         assert flags.imm_control < 6, "jmp with VEX/EVEX?"
         code += f"  unsigned vexoff = {helpercall};\n"
-        code += f"  enc_imm({bufidx}+vexoff, {imm_expr}, {imm_size_expr});\n"
+        code += f"  enc_imm({bufidx}+vexoff, {immbidx}+vexoff, {imm_expr}, {imm_size_expr});\n"
         code += f"  return vexoff ? vexoff+{imm_size_expr}{'+idx' if has_idx else ''} : 0;\n"
     elif has_idx:
         code += f"  unsigned vexoff = {helpercall};\n"
@@ -1233,12 +1234,12 @@ def encode2_table(entries, args):
         }[ot] for i, (ot, reg_ty) in enumerate(zip(ots, reg_tys))]
         fn_opargs = ", FeRegMASK opmask" if evexmask else ""
         fn_opargs += "".join(f", {ty} op{i}" for i, ty in enumerate(op_tys))
-        fn_sig = f"unsigned {fnname}(uint8_t* buf, int flags{fn_opargs})"
+        fn_sig = f"unsigned {fnname}(uint8_t* buf, bool* immb, int flags{fn_opargs})"
         enc_decls += f"{fn_sig};\n"
         if supports_high_regs:
-            enc_decls += f"#define fe64_{mnem}(buf, flags"
+            enc_decls += f"#define fe64_{mnem}(buf, immb, flags"
             enc_decls += "".join(f", op{i}" for i in range(len(op_tys)))
-            enc_decls += f") {fnname}(buf, flags"
+            enc_decls += f") {fnname}(buf, immb, flags"
             enc_decls += "".join(f", FE_MAKE_GPLH(op{i})" if i in supports_high_regs else f", op{i}" for i in range(len(op_tys)))
             enc_decls += f")\n"
 

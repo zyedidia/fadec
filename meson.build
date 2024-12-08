@@ -103,4 +103,15 @@ fadec = declare_dependency(link_with: libfadec,
                            sources: tables)
 install_headers(headers)
 
+# foreach component : components
+#   test(component, executable('@0@-test'.format(component),
+#                              '@0@-test.c'.format(component),
+#                              dependencies: fadec))
+#   if component == 'encode2' and has_cpp
+#     test(component + '-cpp', executable('@0@-test-cpp'.format(component),
+#                                         '@0@-test.cc'.format(component),
+#                                         dependencies: fadec))
+#   endif
+# endforeach
+
 fadec_encode2_public = tables[2]

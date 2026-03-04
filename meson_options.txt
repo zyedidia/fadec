@@ -4,3 +4,5 @@ option('with_decode', type: 'boolean', value: true)
 option('with_encode', type: 'boolean', value: true)
 # encode2 is off-by-default to reduce size and compile-time
 option('with_encode2', type: 'boolean', value: true)
+# Comma-separated list of ISA extensions to exclude (e.g. 'AVX,AVX2,FMA')
+option('exclude_isa', type: 'string', value: '')

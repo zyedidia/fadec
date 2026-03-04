@@ -84,6 +84,9 @@ endif
 if not meson.is_subproject()
   generate_args += ['--stats']
 endif
+if get_option('exclude_isa') != ''
+  generate_args += ['--exclude-isa', get_option('exclude_isa')]
+endif
 
 tables = []
 foreach component : components

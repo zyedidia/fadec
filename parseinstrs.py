@@ -1381,12 +1381,17 @@ if __name__ == "__main__":
     parser.add_argument("--32", dest="modes", action="append_const", const=32)
     parser.add_argument("--64", dest="modes", action="append_const", const=64)
     parser.add_argument("--with-undoc", action="store_true")
+    parser.add_argument("--exclude-isa", default="")
     parser.add_argument("--stats", action="store_true")
     parser.add_argument("mode", choices=generators.keys())
     parser.add_argument("table", type=argparse.FileType('r'))
     parser.add_argument("out_public", type=argparse.FileType('w'))
     parser.add_argument("out_private", type=argparse.FileType('w'))
     args = parser.parse_args()
+
+    exclude_isa = set()
+    if args.exclude_isa:
+        exclude_isa = set(args.exclude_isa.split(","))
 
     entries = []
     for line in args.table.read().splitlines():
@@ -1396,6 +1401,13 @@ if __name__ == "__main__":
         opcode, desc = Opcode.parse(opcode_string), InstrDesc.parse(desc_string)
         verifyOpcodeDesc(opcode, desc)
         if "UNDOC" not in desc.flags or args.with_undoc:
+            if exclude_isa:
+                features = set()
+                for flag in desc.flags:
+                    if flag.startswith("F="):
+                        features.update(flag[2:].split(","))
+                if features & exclude_isa:
+                    continue
             entries.append((weak, opcode, desc))
 
     res_public, res_private = generators[args.mode](entries, args)

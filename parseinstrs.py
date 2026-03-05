@@ -1401,7 +1401,7 @@ if __name__ == "__main__":
         opcode, desc = Opcode.parse(opcode_string), InstrDesc.parse(desc_string)
         verifyOpcodeDesc(opcode, desc)
         if "UNDOC" not in desc.flags or args.with_undoc:
-            if exclude_isa:
+            if exclude_isa and args.mode == "encode2":
                 features = set()
                 for flag in desc.flags:
                     if flag.startswith("F="):
